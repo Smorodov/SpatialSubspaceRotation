@@ -26,9 +26,9 @@ void extractPixels(cv::Mat& img_src, cv::Mat& values)
     cv::Mat bin;
     size_t pixelsInImage = (img_src.rows * img_src.cols);
     generateSkinMap(img_src, bin);
-    size_t NPx = cv::countNonZero(bin);
+    int NPx = cv::countNonZero(bin);
     values = cv::Mat::zeros(NPx, 3, CV_64FC1);
-    size_t n = 0;
+    int n = 0;
     for (int j = 0; j < img_src.rows; ++j)
     {
         for (int k = 0; k < img_src.cols; ++k)
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     SpatialSubspaceRotation ssr(10, 2, 5);
     double pulse = 0;
     double pulse_prev = 0;
-    size_t f = 0;
+    int f = 0;
     int k = 0;
 
     while (k != 27)
@@ -96,8 +96,8 @@ int main(int argc, char** argv)
             spectline.copyTo(plot(cv::Rect(f, 0, 1, ssr.GetFFTWindowSize()/2)));
         }
 
-        float y1 = pulse_prev * 1000 + 300;
-        float y2 = pulse * 1000 + 300;
+        int y1 = cvRound(pulse_prev * 1000 + 300);
+        int y2 = cvRound(pulse * 1000 + 300);
         cv::line(plot, cv::Point(f-1, y1), cv::Point(f, y2), cv::Scalar::all(255), 1);
         {
             cv::imshow("img_src", img_src);

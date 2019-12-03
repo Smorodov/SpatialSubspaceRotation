@@ -16,13 +16,13 @@ public:
 
     cv::Mat GetSpectLine() const;
     double GetFrameRate() const;
-    size_t GetFFTWindowSize() const;
+    int GetFFTWindowSize() const;
 
 private:
     // framerate
     double fs = 0;
     cv::Mat magI;
-    size_t FFTWindowSize;
+    int FFTWindowSize;
 
     size_t f;
     double cutoff;
@@ -45,5 +45,5 @@ private:
 
     void pushRow(cv::Mat& bufMat, cv::Mat& row);
     void pushValToBlock (cv::Mat& block, float Val);
-    void getFFT(cv::Mat& input, size_t WindowSize, cv::Mat& magI);
+    void getFFT(cv::Mat& input, int WindowSize, cv::Mat& magI);
 };

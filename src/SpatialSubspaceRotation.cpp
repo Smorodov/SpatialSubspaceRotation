@@ -14,7 +14,7 @@ SpatialSubspaceRotation::SpatialSubspaceRotation(double fs, double cutoff, doubl
     this->windowSize = windowSize; // window for statistical processing [sec]
 
     // for FFT computation
-    this->FFTWindowSize = windowSize*fs;
+    this->FFTWindowSize = cvRound(windowSize*fs);
     this->FFTblock = cv::Mat::zeros(this->FFTWindowSize, 1, CV_32FC1);
     // output variable
     pulse = 0;
@@ -28,7 +28,7 @@ SpatialSubspaceRotation::SpatialSubspaceRotation(double fs, double cutoff, doubl
     R = cv::Mat::zeros(1, 2, CV_64FC1);
     S = cv::Mat::zeros(1, 2, CV_64FC1);
     SR_backprojected = cv::Mat();
-    block = cv::Mat::zeros(windowSize * fs, 3, CV_64FC1);
+    block = cv::Mat::zeros(FFTWindowSize, 3, CV_64FC1);
 }
 
 ///
@@ -70,7 +70,7 @@ double SpatialSubspaceRotation::Step(cv::Mat& values)
     ++f;
     // My humble modification :)
     pulse = tanh(200*pulse)/100.0;
-    pushValToBlock(FFTblock, pulse);
+    pushValToBlock(FFTblock, static_cast<float>(pulse));
     if (f >= FFTWindowSize)
     {
         getFFT(FFTblock, FFTWindowSize, magI);
@@ -108,7 +108,7 @@ void SpatialSubspaceRotation::pushValToBlock (cv::Mat& block, float Val)
 /// \param WindowSize
 /// \param magI
 ///
-void SpatialSubspaceRotation::getFFT(cv::Mat& input, size_t WindowSize, cv::Mat& magI)
+void SpatialSubspaceRotation::getFFT(cv::Mat& input, int WindowSize, cv::Mat& magI)
 {
     // Calculation of FFT
     // http://docs.opencv.org/doc/tutorials/core/discrete_fourier_transform/discrete_fourier_transform.html
@@ -152,7 +152,7 @@ double SpatialSubspaceRotation::GetFrameRate() const
 /// \brief SpatialSubspaceRotation::GetFFTWindowSize
 /// \return
 ///
-size_t SpatialSubspaceRotation::GetFFTWindowSize() const
+int SpatialSubspaceRotation::GetFFTWindowSize() const
 {
     return FFTWindowSize;
 }
