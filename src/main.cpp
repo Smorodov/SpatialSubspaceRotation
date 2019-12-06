@@ -54,7 +54,17 @@ int main(int argc, char** argv)
 {
     cv::Mat img_src;
     cv::Mat plot = cv::Mat::zeros(600, 1024, CV_8UC3);
-    cv::VideoCapture cap("./../face.avi");
+    
+	std::string fileName = "0";
+	if (argc > 1)
+	{
+		fileName = argv[1];
+	}
+	cv::VideoCapture cap;
+	if (fileName.length() == 1)
+		cap.open(atoi(fileName.c_str()));
+	else
+			cap.open(fileName);
 
     SpatialSubspaceRotation ssr(10, 2, 5);
     double pulse = 0;
@@ -110,17 +120,15 @@ int main(int argc, char** argv)
         double time_cost = (end - start) / cv::getTickFrequency() * 1000;
 
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-        std::chrono::steady_clock::time_point t2;
         std::chrono::duration<double> time_span = std::chrono::duration<double>(0);
 
         while (time_span.count() < (1000.0 / ssr.GetFrameRate() - time_cost) / 1000.0)
         {
-            t2 = std::chrono::steady_clock::now();
-            time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+            time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - t1);
         }
         double end2 = static_cast<double>(cv::getTickCount());
         time_cost = (end2 - start) / cv::getTickFrequency() * 1000;
-        std::cout << "time cost: " << time_cost << "ms" << std::endl;
+        std::cout << "pulse = " << pulse << ", time cost: " << time_cost << "ms" << std::endl;
     }
     return 0;
 }

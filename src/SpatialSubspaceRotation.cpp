@@ -8,27 +8,27 @@
 ///
 SpatialSubspaceRotation::SpatialSubspaceRotation(double fs, double cutoff, double windowSize)
 {
-    f = 0;
-    this->cutoff = cutoff; // cutoff for lowpass filter
-    this->fs = fs; // framerate [Hz]
-    this->windowSize = windowSize; // window for statistical processing [sec]
+    m_fcount = 0;
+    m_cutoff = cutoff; // cutoff for lowpass filter
+    m_fs = fs; // framerate [Hz]
+    m_windowSize = windowSize; // window for statistical processing [sec]
 
     // for FFT computation
-    this->FFTWindowSize = cvRound(windowSize*fs);
-    this->FFTblock = cv::Mat::zeros(this->FFTWindowSize, 1, CV_32FC1);
+    m_FFTWindowSize = cvRound(windowSize*fs);
+    m_FFTblock = cv::Mat::zeros(this->m_FFTWindowSize, 1, CV_32FC1);
     // output variable
-    pulse = 0;
+    m_pulse = 0;
     // setup our lowpass filter
-    butt.setup(fs, cutoff);
+    m_butt.setup(fs, cutoff);
     //butt.setup(fs, cutoff, 1);
-    U = cv::Mat::zeros(3, 3, CV_64FC1);
-    U_prev = cv::Mat::zeros(3, 3, CV_64FC1);
-    Sigmas = cv::Mat::zeros(3, 1, CV_64FC1);
-    Sigmas_prev = cv::Mat::zeros(3, 1, CV_64FC1);
-    R = cv::Mat::zeros(1, 2, CV_64FC1);
-    S = cv::Mat::zeros(1, 2, CV_64FC1);
-    SR_backprojected = cv::Mat();
-    block = cv::Mat::zeros(FFTWindowSize, 3, CV_64FC1);
+    m_U = cv::Mat::zeros(3, 3, CV_64FC1);
+    m_prevU = cv::Mat::zeros(3, 3, CV_64FC1);
+    n_sigmas = cv::Mat::zeros(3, 1, CV_64FC1);
+    m_prevSigmas = cv::Mat::zeros(3, 1, CV_64FC1);
+    m_R = cv::Mat::zeros(1, 2, CV_64FC1);
+    m_S = cv::Mat::zeros(1, 2, CV_64FC1);
+    m_backprojectedSR = cv::Mat();
+    m_block = cv::Mat::zeros(m_FFTWindowSize, 3, CV_64FC1);
 }
 
 ///
@@ -38,44 +38,44 @@ SpatialSubspaceRotation::SpatialSubspaceRotation(double fs, double cutoff, doubl
 ///
 double SpatialSubspaceRotation::Step(cv::Mat& values)
 {
-    C = (values.t() * values) / values.rows;
+    m_C = (values.t() * values) / values.rows;
 
-    Sigmas.copyTo(Sigmas_prev);
-    U.copyTo(U_prev);
-    cv::eigen(C, Sigmas, U);
-    U = U.t();
+    n_sigmas.copyTo(m_prevSigmas);
+    m_U.copyTo(m_prevU);
+    cv::eigen(m_C, n_sigmas, m_U);
+    m_U = m_U.t();
 
-    if (f > 0)
+    if (m_fcount > 0)
     {
         // rotation between the skin vector and orthonormal plane
-        R = U.col(0).t() * U_prev.colRange(1, 3);
+        m_R = m_U.col(0).t() * m_prevU.colRange(1, 3);
         // scale change
-        S.at<double>(0) = sqrt(Sigmas.at<double>(0) / Sigmas_prev.at<double>(1));
-        S.at<double>(1) = sqrt(Sigmas.at<double>(0) / Sigmas_prev.at<double>(2));
-        SR_backprojected = S.mul(R) * U_prev.colRange(1, 3).t();
-        pushRow(block, SR_backprojected);
+        m_S.at<double>(0) = sqrt(n_sigmas.at<double>(0) / m_prevSigmas.at<double>(1));
+        m_S.at<double>(1) = sqrt(n_sigmas.at<double>(0) / m_prevSigmas.at<double>(2));
+        m_backprojectedSR = m_S.mul(m_R) * m_prevU.colRange(1, 3).t();
+        pushRow(m_block, m_backprojectedSR);
     }
 
-    if (f >= windowSize * fs)
+    if (m_fcount >= m_windowSize * m_fs)
     {
-        cv::meanStdDev(block.col(0), m, std);
-        double std1 = std.at<double>(0);
-        cv::meanStdDev(block.col(1), m, std);
-        double std2 = std.at<double>(0);
+        cv::meanStdDev(m_block.col(0), m_mean, m_std);
+        double std1 = m_std.at<double>(0);
+        cv::meanStdDev(m_block.col(1), m_mean, m_std);
+        double std2 = m_std.at<double>(0);
         double sigma = std1 / std2;
         //double sigma = std2 / std1;
-        p_block = block.col(0) - sigma * block.col(1);
-        pulse = butt.filter(p_block.at<double>(0) - mean(p_block)[0]);
+        m_p_block = m_block.col(0) - sigma * m_block.col(1);
+        m_pulse = m_butt.filter(m_p_block.at<double>(0) - mean(m_p_block)[0]);
     }
-    ++f;
+    ++m_fcount;
     // My humble modification :)
-    pulse = tanh(200*pulse)/100.0;
-    pushValToBlock(FFTblock, static_cast<float>(pulse));
-    if (f >= FFTWindowSize)
+    m_pulse = tanh(200*m_pulse)/100.0;
+    pushValToBlock(m_FFTblock, static_cast<float>(m_pulse));
+    if (m_fcount >= m_FFTWindowSize)
     {
-        getFFT(FFTblock, FFTWindowSize, magI);
+        getFFT(m_FFTblock, m_FFTWindowSize, m_magI);
     }
-    return pulse;
+    return m_pulse;
 }
 
 ///
@@ -131,9 +131,9 @@ void SpatialSubspaceRotation::getFFT(cv::Mat& input, int WindowSize, cv::Mat& ma
 cv::Mat SpatialSubspaceRotation::GetSpectLine() const
 {
     cv::Mat spectline;
-    if (!magI.empty())
+    if (!m_magI.empty())
     {
-        cv::normalize(magI, spectline, 0, 255, cv::NORM_MINMAX);
+        cv::normalize(m_magI, spectline, 0, 255, cv::NORM_MINMAX);
         spectline.convertTo(spectline, CV_8UC1);
     }
     return spectline;
@@ -145,7 +145,7 @@ cv::Mat SpatialSubspaceRotation::GetSpectLine() const
 ///
 double SpatialSubspaceRotation::GetFrameRate() const
 {
-    return fs;
+    return m_fs;
 }
 
 ///
@@ -154,5 +154,5 @@ double SpatialSubspaceRotation::GetFrameRate() const
 ///
 int SpatialSubspaceRotation::GetFFTWindowSize() const
 {
-    return FFTWindowSize;
+    return m_FFTWindowSize;
 }

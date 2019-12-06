@@ -20,28 +20,29 @@ public:
 
 private:
     // framerate
-    double fs = 0;
-    cv::Mat magI;
-    int FFTWindowSize;
+    double m_fs = 0;
+    cv::Mat m_magI;
+    int m_FFTWindowSize;
 
-    size_t f;
-    double cutoff;
-    double windowSize; // sec
-    double pulse;
-    Iir::Butterworth::LowPass<10> butt;
-    cv::Mat C;
-    cv::Mat m, std;
-    cv::Mat U;
-    cv::Mat U_prev;
-    cv::Mat Sigmas;
-    cv::Mat Sigmas_prev;
-    cv::Mat R;
-    cv::Mat S;
-    cv::Mat SR_backprojected;
-    cv::Mat p_block;
-    cv::Mat block;
+    size_t m_fcount = 0;
+    double m_cutoff = 0;
+    double m_windowSize = 0; // sec
+    double m_pulse = 0;
+    Iir::Butterworth::LowPass<10> m_butt;
+    cv::Mat m_C;
+	cv::Mat m_mean;
+	cv::Mat m_std;
+    cv::Mat m_U;
+    cv::Mat m_prevU;
+    cv::Mat n_sigmas;
+    cv::Mat m_prevSigmas;
+    cv::Mat m_R;
+    cv::Mat m_S;
+    cv::Mat m_backprojectedSR;
+    cv::Mat m_p_block;
+    cv::Mat m_block;
 
-    cv::Mat FFTblock;
+    cv::Mat m_FFTblock;
 
     void pushRow(cv::Mat& bufMat, cv::Mat& row);
     void pushValToBlock (cv::Mat& block, float Val);
