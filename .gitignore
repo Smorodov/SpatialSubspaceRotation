@@ -35,3 +35,6 @@ build/*
 vs2019/*
 docs
 MATLAB
+
+*.txt.user
+*.txt.user.*

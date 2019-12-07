@@ -1,21 +1,18 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
 set (PROJ_NAME SpatialSubspaceRotation)
 project(${PROJ_NAME})
+
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-find_package(OpenCV)
+find_package(OpenCV REQUIRED)
 message("Opencv Version: ${OPENCV_VERSION}" )
 
-set(folder_source src/main.cpp
-				  
-				  )
+set(folder_source src/main.cpp src/SpatialSubspaceRotation.cpp)
 
-set(folder_header 
-				  
-				   )
+set(folder_header src/SpatialSubspaceRotation.h)
 
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
@@ -38,7 +35,6 @@ include_directories(${CMAKE_SOURCE_DIR}/iir/iir)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -std=c++11 -fopenmp")
 include_directories(${INC_DIRS})
-
 
 add_executable(${PROJ_NAME} ${folder_source} ${folder_header} ${DSPFILTERS_HEADER} ${DSPFILTERS_SOURCE} )
 target_link_libraries(${PROJ_NAME} ${OpenCV_LIBS})
